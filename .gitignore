@@ -1,0 +1,18 @@
+# Ignore everything
+/*
+
+# Allow the .gitignore file itself
+!.gitignore
+
+# Allow specific directories and their contents
+!config/
+!config/**
+
+!Content/
+!Content/**
+
+!Source/
+!Source/**
+
+# Allow the .uproject file
+!*.uproject
