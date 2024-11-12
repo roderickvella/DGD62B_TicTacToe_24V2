@@ -13,5 +13,8 @@ UCLASS()
 class DGD62BTICTACTOE_API ADGD62BTicTacToeGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	ADGD62BTicTacToeGameModeBase();
 	
 };
