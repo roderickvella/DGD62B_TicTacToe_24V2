@@ -33,6 +33,9 @@ void AGameBoard::BeginPlay()
 	for (UBoxComponent* BoxCollider : BoxColliders) {
 		if (BoxCollider) {
 			UE_LOG(LogTemp, Warning, TEXT("Box Collider: %s"), *BoxCollider->GetName());
+			//add dynamic event binding
+			BoxCollider->OnClicked.AddDynamic(this, &AGameBoard::OnCellClicked);
+
 		}
 	}
 }
@@ -46,7 +49,10 @@ void AGameBoard::Tick(float DeltaTime)
 
 void AGameBoard::OnCellClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
-
+	//print the clicked component
+	UE_LOG(LogTemp, Warning, TEXT("Touched Component: %s"), *TouchedComponent->GetName());
+	FIntPoint ClickedCell = GetClickedCell(TouchedComponent);
+	UE_LOG(LogTemp, Warning, TEXT("Cell Clicked: %d %d"), ClickedCell.X, ClickedCell.Y);
 }
 
 void AGameBoard::UpdateGameStatus(const FString& NewStatus)
@@ -55,7 +61,23 @@ void AGameBoard::UpdateGameStatus(const FString& NewStatus)
 
 FIntPoint AGameBoard::GetClickedCell(UPrimitiveComponent* TouchedComponent) const
 {
-	return FIntPoint();
+	FString ComponentName = TouchedComponent->GetName();
+
+	//extract the row and column from the name (assume that components are named in the following format
+	//BoxCollision_1_1, BoxCollision_1_2 etc
+
+	//extract the row and column from the component name
+	int32 Row = -1, Column = -1;
+	FString LeftPart, RightPart;
+	if (ComponentName.Split(TEXT("_"), nullptr, &RightPart))
+	{
+		if (RightPart.Split(TEXT("_"), &LeftPart, &RightPart)) {
+			Row = FCString::Atoi(*LeftPart);
+			Column = FCString::Atoi(*RightPart);
+		}
+	}
+
+	return FIntPoint(Row-1,Column-1); //convert to zero-based index
 }
 
 bool AGameBoard::CheckWinCondition(ECellState player)
