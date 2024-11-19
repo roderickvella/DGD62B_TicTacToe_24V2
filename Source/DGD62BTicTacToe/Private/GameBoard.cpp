@@ -53,6 +53,46 @@ void AGameBoard::OnCellClicked(UPrimitiveComponent* TouchedComponent, FKey Butto
 	UE_LOG(LogTemp, Warning, TEXT("Touched Component: %s"), *TouchedComponent->GetName());
 	FIntPoint ClickedCell = GetClickedCell(TouchedComponent);
 	UE_LOG(LogTemp, Warning, TEXT("Cell Clicked: %d %d"), ClickedCell.X, ClickedCell.Y);
+
+	//check if the cell is empty
+	if (Grid[ClickedCell.X][ClickedCell.Y] == ECellState::Empty) {
+		//determine the new state based on the current player
+		ECellState NewState = (CurrentPlayerTurn == 1) ? ECellState::Cross : ECellState::Cyclinder;
+		Grid[ClickedCell.X][ClickedCell.Y] = NewState;
+
+		//determine which actor to spawn (cross or cyclinder)
+		TSubclassOf<AActor> ActorToSpawn = (NewState == ECellState::Cross) ? CrossBlueprint : CyclinderBlueprint;
+
+		FVector Location = TouchedComponent->GetComponentLocation();
+		GetWorld()->SpawnActor<AActor>(ActorToSpawn, Location, FRotator::ZeroRotator);
+
+
+		//check for win condition
+		if (CheckWinCondition(NewState)) {
+			UE_LOG(LogTemp, Warning, TEXT("%s wins!"),
+				(NewState == ECellState::Cross) ? TEXT("Cross") : TEXT("Cylinder"));
+
+			return;
+		}
+
+		//check for draw condition
+		if (CheckDrawCondition()) {
+			UE_LOG(LogTemp, Warning, TEXT("It's a draw!!!!"));
+
+			return;
+		}
+
+
+
+		//switch player turn
+		CurrentPlayerTurn = (CurrentPlayerTurn == 1) ? 2 : 1;
+
+	}
+
+
+
+
+
 }
 
 void AGameBoard::UpdateGameStatus(const FString& NewStatus)
@@ -82,12 +122,47 @@ FIntPoint AGameBoard::GetClickedCell(UPrimitiveComponent* TouchedComponent) cons
 
 bool AGameBoard::CheckWinCondition(ECellState player)
 {
+	for (int32 i = 0; i < 3; ++i) {
+		//check rows
+		if (Grid[i][0] == player && Grid[i][1] == player && Grid[i][2] == player) {
+			return true;
+		}
+
+		//check columns
+		if (Grid[0][i] == player && Grid[1][i] == player && Grid[2][i] == player) {
+			return true;
+		}
+	}
+
+	//check for diagonals
+	if (Grid[0][0] == player && Grid[1][1] == player && Grid[2][2] == player) {
+		return true;
+	}
+
+	if (Grid[0][2] == player && Grid[1][1] == player && Grid[2][0] == player) {
+		return true;
+	}
+
+	//if no win is found
 	return false;
+
+
+
+
+	
 }
 
 bool AGameBoard::CheckDrawCondition()
 {
-	return false;
+	for (int32 Row = 0; Row < 3; ++Row) {
+		for (int32 Column = 0; Column < 3; ++Column) {
+			if (Grid[Row][Column] == ECellState::Empty) {
+				return false; //found an empty cell, not a draw yet
+			}
+		}
+	}
+
+	return true; //no empty cells found, it's a draw
 }
 
 void AGameBoard::ResetBoard()
