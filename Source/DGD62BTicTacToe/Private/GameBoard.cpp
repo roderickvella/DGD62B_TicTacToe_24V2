@@ -2,6 +2,7 @@
 
 
 #include "GameBoard.h"
+#include <MyGameInstance.h>
 
 // Sets default values
 AGameBoard::AGameBoard()
@@ -72,13 +73,15 @@ void AGameBoard::OnCellClicked(UPrimitiveComponent* TouchedComponent, FKey Butto
 			UE_LOG(LogTemp, Warning, TEXT("%s wins!"),
 				(NewState == ECellState::Cross) ? TEXT("Cross") : TEXT("Cylinder"));
 
+			UpdateGameStatus((NewState == ECellState::Cross) ? TEXT("Cross Wins") : TEXT("Cylinder wins"));
+
 			return;
 		}
 
 		//check for draw condition
 		if (CheckDrawCondition()) {
 			UE_LOG(LogTemp, Warning, TEXT("It's a draw!!!!"));
-
+			UpdateGameStatus(TEXT("It's a draw"));
 			return;
 		}
 
@@ -97,6 +100,11 @@ void AGameBoard::OnCellClicked(UPrimitiveComponent* TouchedComponent, FKey Butto
 
 void AGameBoard::UpdateGameStatus(const FString& NewStatus)
 {
+	UMyGameInstance* GameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	if (GameInstance) {
+		GameInstance->OnGameStatusUpdated.Broadcast(NewStatus);
+	}
+
 }
 
 FIntPoint AGameBoard::GetClickedCell(UPrimitiveComponent* TouchedComponent) const
