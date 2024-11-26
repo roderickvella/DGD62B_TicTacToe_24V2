@@ -2,6 +2,7 @@
 
 
 #include "GameBoard.h"
+#include <Kismet/GameplayStatics.h>
 #include <MyGameInstance.h>
 
 // Sets default values
@@ -39,6 +40,14 @@ void AGameBoard::BeginPlay()
 
 		}
 	}
+
+	//subscribe to the OnResetGameRequested Event
+	UMyGameInstance* GameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	if (GameInstance) {
+		GameInstance->OnResetGameRequested.AddDynamic(this, &AGameBoard::ResetBoard);
+	}
+
+
 }
 
 // Called every frame
@@ -175,5 +184,26 @@ bool AGameBoard::CheckDrawCondition()
 
 void AGameBoard::ResetBoard()
 {
+	//reset the grid to all empty cells
+	for (int32 Row = 0; Row < 3; Row++) {
+		for (int32 Column = 0; Column < 3; Column++) {
+			Grid[Row][Column] = ECellState::Empty;
+		}
+	}
+
+	//destroy all spawned actors (crosses and cylinders)
+	TArray<AActor*> SpawnedActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), SpawnedActors);
+
+	for (AActor* Actor : SpawnedActors) {
+		//check if thea actor is a cross or cylinder
+		if (Actor->IsA(CrossBlueprint) || Actor->IsA(CyclinderBlueprint)) {
+			Actor->Destroy();
+		}
+	}
+
+	//reset the player turn back to 1 which is the cross
+	CurrentPlayerTurn = 1;
+	UE_LOG(LogTemp, Warning, TEXT("Game Board Reset!"));
 }
 
